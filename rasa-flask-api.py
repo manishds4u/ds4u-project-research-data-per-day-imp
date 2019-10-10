@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct  9 19:59:43 2019
-
-@author: Manish
-"""
-
-# -*- coding: utf-8 -*-
-"""
 Created on Mon Oct  7 18:15:51 2019
 
 @author: Manish
@@ -34,6 +27,8 @@ import traceback
 import json
 import requests
 
+import mysql.connector
+
 import requests
 
 # Your API definition
@@ -46,10 +41,16 @@ cors = CORS(app, resources={r"/": {"origins": "http://localhost:5000"}})
 
 def chat():
     try:
+        
+        #rasa url
+
         url = "http://localhost:5005/webhooks/rest/webhook/"
+        #json content
         headers = {'content-type': 'application/json'}
     
         #payload = "{ \"message\": \" i want to do engineering\"}"
+        
+        #json input in postman
         json_input = request.json
         inp_msg  = json_input["message"]
         print("1",inp_msg)
@@ -63,9 +64,51 @@ def chat():
         #print(response)
         #print("3",response.status_code)
         #print("4",response.text)
-        print("5",response.json())     
+        print("5",response.json())   
         
-    
+        #database insertion
+        
+        def insert_rasadb():
+                             #database connection
+
+            try:
+                local_connection = mysql.connector.connect(
+                                                           host="localhost",
+                                                           user="root",
+                                                           passwd="",
+                                                           database="rasadb"
+                                                           )
+                local_cursor = local_connection.cursor()
+                sql = "insert into rasatb (message) values ('%s')" %(inp_msg)
+                
+                print (sql)
+                # Execute dml and commit changes
+                local_cursor.execute(sql,json_input)
+                local_connection.commit()
+                local_cursor.close()  
+                
+                print("recorded successfully into rasatb table ")
+            except mysql.connector.Error as error:
+                print("Failed to insert into MySQL table {}".format(error))
+
+            finally:
+                if (local_connection.is_connected()):
+                    
+                    local_cursor.close()
+                    local_connection.close()
+                    print("MySQL connection is closed")
+                    
+                    
+        insert_rasadb()
+                    
+                    
+            
+                        
+                
+            
+        
+        
+        #json response in postman
         return jsonify(response.json())
 
 
@@ -80,3 +123,6 @@ def chat():
 
 if __name__ == '__main__':
     app.run()
+
+
+
